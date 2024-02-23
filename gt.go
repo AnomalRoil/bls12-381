@@ -67,18 +67,21 @@ func (g *GT) ToBytes(e *E) []byte {
 func (g *GT) IsValid(e *E) bool {
 	r0, r1, r2 := g.New().Set(e), g.New(), g.New()
 
-	g.fp12.frobeniusMap1(r0)
-	r1.set(r0)
-	g.fp12.frobeniusMap1(r0)
-	r2.set(r0)
-	g.fp12.frobeniusMap2(r0)
-	g.Mul(r0, r0, e)
+	g.fp12.frobeniusMap1(r0) // r0 = e^p
+	r1.set(r0)               // r1 = e^p
+	g.fp12.frobeniusMap1(r0) // r0 = e^(p^2)
+	r2.set(r0)               // r2 = e^(p^2)
+	g.fp12.frobeniusMap2(r0) // r0 = e^(p^4)
+	g.Mul(r0, r0, e)         // r0 = e·e^(p^4)
+	// cyclotomic test
 	if !r0.Equal(r2) {
 		return false
 	}
+	// r0 = e^-u
 	g.Exp(r0, e, bigFromHex("0xd201000000010000"))
+	// r0 = e^-u · e^p = e^(p-u)
 	g.Mul(r0, r0, r1)
-
+	// e^(p-u) = e^(p+1-t) == 1
 	return r0.IsOne()
 
 }
